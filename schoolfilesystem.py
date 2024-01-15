@@ -1,21 +1,62 @@
 
 #Libraries you may need:
-import csv, collections, dictionary, (pandas as pd), urlopen, etc..
+#import csv, collections, dictionary, (pandas as pd), urlopen, etc..
+import csv
+import collections
+import pandas as pd
+from PyPDF2 import PdfReader
+
+#import urlopen
+
 
 #classes and Functions to implement
 class SchoolAssessmentSystem:
-    def __init__():
+    def __init__(self,filename):
+        self.filename = filename
+        self.data = None
+    def process_file(self):            
+        types = self.filename[-3:]
+        if types == 'txt':
+            try:
+                with open(filename, 'r') as file:
+                    text = file.read()
+            except FileNotFoundError:
+                # Handle file not found exception
+                print(f"Error: File '{filename}' not found.")
+                return None
 
-    def process_file():            
-
+        elif types == 'pdf':
+            
+            reader = PdfReader(filename)
+            page = reader.pages[0]
+            text = page.extract_text()
+        
+        elif types == 'csv':
+            with open(filename, mode = 'r') as file:
+                text = []
+                csvFile = csv.reader(file)
+            
+                text2 = csvFile
+                for i in csvFile:
+                    text.append(i)
+            
+        print(text)
+        print(csvFile)
+        print(types)
+        
     def transfer_data():
-
+        pass
     def fetch_web_data():
-
+        pass
     def analyze_content():
-
+        pass
     def generate_summary():
+        pass
 
+
+filename = input("enter a file name: ")
+new_system = SchoolAssessmentSystem(filename)
+new_system.process_file()
 
 # Analyze content & display result area
 # Sample of Output:
