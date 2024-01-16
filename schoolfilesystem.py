@@ -13,50 +13,63 @@ from PyPDF2 import PdfReader
 class SchoolAssessmentSystem:
     def __init__(self,filename):
         self.filename = filename
-        self.data = None
+        self.student = []
+        self.text = None
+        self.pdf = None
     def process_file(self):            
         types = self.filename[-3:]
-        if types == 'txt':
-            try:
+        try:
+            if types == 'txt':   
                 with open(filename, 'r') as file:
                     text = file.read()
-            except FileNotFoundError:
-                # Handle file not found exception
-                print(f"Error: File '{filename}' not found.")
-                return None
-
-        elif types == 'pdf':
+                    self.text = text
+                    
+            elif types == 'pdf':
+                reader = PdfReader(filename)
+                page = reader.pages[0]
+                text = page.extract_text()
+                self.pdf = text
+                
+            elif types == 'csv':
+                with open(filename, mode = 'r') as file:              
+                    csvFile = csv.reader(file)
+                    for i in csvFile:
+                        self.student.append(i)
+                    
+                        
+        except FileNotFoundError:
+            # Handle file not found exception
+            print(f"Error: File '{filename}' not found.")
+            return None
             
-            reader = PdfReader(filename)
-            page = reader.pages[0]
-            text = page.extract_text()
-        
-        elif types == 'csv':
-            with open(filename, mode = 'r') as file:
-                text = []
-                csvFile = csv.reader(file)
-            
-                text2 = csvFile
-                for i in csvFile:
-                    text.append(i)
-            
-        print(text)
-        print(csvFile)
-        print(types)
+        print(self.student)
         
     def transfer_data():
         pass
     def fetch_web_data():
         pass
-    def analyze_content():
-        pass
-    def generate_summary():
-        pass
+    
+    def analyze_content(self, student_name):
+        for i in self.student:
+            if i[0] == student_name:
+                avrg_score = (eval(i[6]) + eval(i[7]) + eval(i[8])) / 3
+                top_score = max(i[6:])
+                top_index = i.index(top_score)
+
+                self.generate_summary(student_name, avrg_score, top_index, top_score)
+                
+        
+    def generate_summary(self, student_name, avg_score, top_class_index, top_score):
+        print(f"1. Overall Performance of {student_name}:")
+        print(f"-Average Score: {avg_score}\n-Top-Performing-class: {self.student[0][top_class_index]}")
+        
 
 
 filename = input("enter a file name: ")
 new_system = SchoolAssessmentSystem(filename)
 new_system.process_file()
+assessment = input("Enter a student name: ")
+new_system.analyze_content(assessment)
 
 # Analyze content & display result area
 # Sample of Output:
