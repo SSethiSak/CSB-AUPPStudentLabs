@@ -2,9 +2,10 @@
 #Libraries you may need:
 #import csv, collections, dictionary, (pandas as pd), urlopen, etc..
 import csv
-import collections
 import pandas as pd
 from PyPDF2 import PdfReader
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
 
 #import urlopen
 
@@ -62,8 +63,17 @@ class SchoolAssessmentSystem:
         merged = pd.merge(df[['name', 'math score', 'English score', 'Science score']], df2[['name', 'math score', 'English score', 'Science score']], on="name")
         merged.to_csv('new_merged.csv', index=False)
         
-    def fetch_web_data():
-        pass
+    def fetch_web_data(self, url):
+
+        response = urlopen(url)
+        html_content = response.read()
+        soup = BeautifulSoup(html_content, "html.parser")
+
+        assessment_info = soup.find("div", class_="assessment-info").get_text()
+        student_scores = soup.find_all("span", class_="student-score")
+        self.student = student_scores
+        self.text = assessment_info
+        
     
     def analyze_content(self, student_name):
         curr_score = []
@@ -85,22 +95,29 @@ class SchoolAssessmentSystem:
         for score in range(len(curr_score)):
             assessment_result.append(curr_score[score] - prev_score[score])
         
-        self.generate_summary(student_name, avrg_score, top_index, top_score, assessment_result)
+       
         
         class_data = {assessment[2]: {'math':0, 'english' : 0, 'science' : 0} for assessment in self.student[1:]}
-
-        class_data['10A']['math'] = 45
         for student in self.student[1:]:
             class_data[student[2]]['math'] += eval(student[6])
             class_data[student[2]]['english'] += eval(student[7])
             class_data[student[2]]['science'] += eval(student[8])
 
-        print(class_data)
+            
+        class_assessment = class_data
+        for student in self.student_prev_semester[1:]:
+            class_assessment[student[2]]['math'] -= eval(student[6])
+            class_assessment[student[2]]['english'] -= eval(student[7])
+            class_assessment[student[2]]['science'] -= eval(student[8])
+ 
+        
+        #print(class_assessment)       
+        self.generate_summary(student_name, avrg_score, top_index, top_score, assessment_result, class_assessment)
 
             
                 
         
-    def generate_summary(self, student_name, avg_score, top_class_index, top_score, scores):
+    def generate_summary(self, student_name, avg_score, top_class_index, top_score, scores,class_assessment):
         print(f"1. Overall Performance of {student_name}:")
         print(f"-Average Score: {avg_score}\n-Top-Performing-class: {self.student[0][top_class_index]}")
         print("2. Subject-wise Analysis:")
@@ -114,6 +131,46 @@ class SchoolAssessmentSystem:
                 sub_ind += 1
             else:
                 print(f"{self.student[0][sub_ind]}: Consistent performance across all classes.")
+        print("3. Notable Observations:")
+        highest_math, highest_english, highest_science = 0,0,0
+        highest_math_class, highest_english_class, highest_science_class = None, None, None
+
+        for i in class_assessment:
+            if class_assessment[i]['math'] > highest_math:
+                highest_math = class_assessment[i]['math']
+                highest_math_class = i
+            if class_assessment[i]['english'] > highest_english:
+                highest_english = class_assessment[i]['english']
+                highest_english_class = i
+            if class_assessment[i]['science'] > highest_science:
+                highest_science = class_assessment[i]['science']
+                highest_science_class = i
+            
+        print(f"""
+              -Mathematics: Grade {highest_math_class} shows the most significant improvement ({highest_math}% improvement).
+              -English proficiency: Grade {highest_english_class} shows the most significant improvement ({highest_english}% improvement).
+              -Science: Grade {highest_science_class} shows the most significant improvement ({highest_science}% improvement).
+              """)
+        
+        lowest_math, lowest_english, lowest_science = 0,0,0
+        lowest_math_class, lowest_english_class, lowest_science_class = None, None, None
+        for i in class_assessment:
+            if class_assessment[i]['math'] < lowest_math:
+                lowest_math = class_assessment[i]['math']
+                lowest_math_class = i
+            if class_assessment[i]['english'] < lowest_english:
+                lowest_english = class_assessment[i]['english']
+                lowest_english_class = i
+            if class_assessment[i]['science'] < lowest_science:
+                lowest_science = class_assessment[i]['science']
+                lowest_science_class = i
+        
+        print(f"""5.Reccomendation:
+            -Consider additional support for {lowest_math_class} in Mathematic
+            -Consider additional support for {lowest_english_class} in English Proficiency
+            -Consider additional support for {lowest_science_class} in Science
+              """)
+        
     
     def print_student(self):
         for i in self.student:
